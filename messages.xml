@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<MessageCollection xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+                  xsi:noNamespaceSchemaLocation="messagecollection.xsd">
+
+	<!-- Plugin information -->
+	<Plugin>
+		<ShortDescription>Intent creation</ShortDescription>
+		<Details>
+			<![CDATA[
+			<p>This plugin finds all calls to intent constructors</p>
+			]]>
+		</Details>
+	</Plugin>
+	
+	<!-- Detectors -->
+	<Detector class="detectors.FindIntentCreations">
+		<Details>
+			<![CDATA[
+				<p>Find invocations of Intent constructors</p>
+			]]>
+		</Details>
+	</Detector>
+	
+	
+	
+	<BugPattern type="CREATE_INTENT">
+		<ShortDescription>Create Intent instance</ShortDescription>
+		<LongDescription>Call to Intent constructor in method {1}</LongDescription>
+		<Details>
+			<![CDATA[
+				<p>Create a new Intent.</p>
+			]]>
+		</Details>
+	</BugPattern>
+    <BugCode abbrev="CRI">Create Intent</BugCode>
+</MessageCollection>

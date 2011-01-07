@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+
+<FindbugsPlugin
+		pluginid="net.findbugs.intentfinder"
+		defaultenabled="true"
+		provider="Me" 
+		website="">
+
+	
+	<!-- Detectors -->
+	<Detector class="detectors.FindIntentCreations"
+			reports="CREATE_INTENT"
+			hidden="false" />
+
+    <BugPattern type="CREATE_INTENT" abbrev="CRI" category=""/>
+    
+    <EngineRegistrar class="intentdataflow.IntentSimulatorEngineRegistrar"/>
+
+</FindbugsPlugin>
