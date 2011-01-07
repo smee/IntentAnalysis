@@ -18,6 +18,7 @@
  */
 package intentdataflow;
 
+import org.apache.bcel.classfile.ConstantClass;
 import org.apache.bcel.generic.BIPUSH;
 import org.apache.bcel.generic.ConstantPoolGen;
 import org.apache.bcel.generic.GETFIELD;
@@ -123,8 +124,10 @@ public class ConstantFrameModelingVisitor extends AbstractFrameModelingVisitor<C
 		String methodName = obj.getMethodName(cpg);
 		if (loadClassType.getClassName().equals("android.content.Intent") && methodName.equals("<init>")) {
 			Constant[] args = simulateCall(obj);
+			popFrameTop();//the instance was put on the stack twice (new/dup), simulate it
 			getFrame().pushValue(new Constant(new Intent(args,obj.getArgumentTypes(cpg),cpg.getConstantPool())));
-		}
+		}else
+			super.visitINVOKESPECIAL(obj);
 
 	}
 
@@ -142,6 +145,14 @@ public class ConstantFrameModelingVisitor extends AbstractFrameModelingVisitor<C
 	private Constant popFrameTop() {
 		try {
 			return getFrame().popValue();
+		} catch (DataflowAnalysisException e) {
+			AnalysisContext.logError("Could not pop from call stack ", e);
+			return null;
+		}
+	}
+	private Constant getTopValue() {
+		try {
+			return getFrame().getTopValue();
 		} catch (DataflowAnalysisException e) {
 			AnalysisContext.logError("Could not pop from call stack ", e);
 			return null;
@@ -192,12 +203,15 @@ public class ConstantFrameModelingVisitor extends AbstractFrameModelingVisitor<C
 		} else if (loadClassType.getClassName().equals("java.lang.Class")
 				&& methodName.equals("getName")) {
 			// java.lang.Class.getName()
-			Constant[] args = simulateCall(obj);
-			getFrame().pushValue(new Constant(args[0].getValue()));
+			Constant clz = getTopValue();
+			popFrameTop();
+			getFrame().pushValue(new Constant(((ConstantClass)clz.getValue()).getConstantValue(cpg.getConstantPool())));
 		} else {
 			super.visitINVOKEVIRTUAL(obj);
 		}
 	}
+
+
 	@Override
 	public void visitINVOKESTATIC(INVOKESTATIC obj) {
     	ObjectType loadClassType = obj.getLoadClassType(cpg);

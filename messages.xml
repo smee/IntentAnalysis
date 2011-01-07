@@ -14,7 +14,7 @@
 	</Plugin>
 	
 	<!-- Detectors -->
-	<Detector class="detectors.FindIntentCreations">
+	<Detector class="detectors.FindIntentsViaCFG">
 		<Details>
 			<![CDATA[
 				<p>Find invocations of Intent constructors</p>
