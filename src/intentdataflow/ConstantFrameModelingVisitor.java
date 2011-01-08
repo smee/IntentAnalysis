@@ -123,9 +123,12 @@ public class ConstantFrameModelingVisitor extends AbstractFrameModelingVisitor<C
 		ObjectType loadClassType = obj.getLoadClassType(cpg);
 		String methodName = obj.getMethodName(cpg);
 		if (loadClassType.getClassName().equals("android.content.Intent") && methodName.equals("<init>")) {
-			Constant[] args = simulateCall(obj);
-			popFrameTop();//the instance was put on the stack twice (new/dup), simulate it
-			getFrame().pushValue(new Constant(new Intent(args,obj.getArgumentTypes(cpg),cpg.getConstantPool())));
+			Constant[] args = simulateCall(obj,false);
+			try {
+				((Intent)getFrame().getTopValue().getValue()).callConstructor(args,obj.getArgumentTypes(cpg),cpg.getConstantPool());
+			} catch (DataflowAnalysisException e) {
+				AnalysisContext.logError("Could not pop from call stack ", e);
+			}
 		}else
 			super.visitINVOKESPECIAL(obj);
 
@@ -134,11 +137,13 @@ public class ConstantFrameModelingVisitor extends AbstractFrameModelingVisitor<C
 	/**
 	 * Fetch parameters, clean up operand stack.
 	 * @param obj invoke instruction
+	 * @param b 
 	 * @return
 	 */
-	private Constant[] simulateCall(InvokeInstruction obj){
+	private Constant[] simulateCall(InvokeInstruction obj, boolean removeObject){
 		Constant[] res = getCallParameters(obj);
-		popFrameTop();
+		if(removeObject)
+			popFrameTop();
 		return res;
 	}
 
@@ -218,7 +223,7 @@ public class ConstantFrameModelingVisitor extends AbstractFrameModelingVisitor<C
     	String methodName = obj.getMethodName(cpg);
 		if (loadClassType.getClassName().equals("android.net.Uri") && methodName.equals("parse")) {
     		// android.net.Uri.parse(...)
-			Constant[] args = simulateCall(obj);
+			Constant[] args = simulateCall(obj,true);
 			getFrame().pushValue(new Constant(args[0].getValue()));
 		}else
 			super.visitINVOKESTATIC(obj);

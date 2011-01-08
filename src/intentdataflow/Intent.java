@@ -1,6 +1,5 @@
 package intentdataflow;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -15,35 +14,26 @@ public class Intent {
 	String action;
 	String uri;
 	String mimetype;
-	
+
 	Map<Constant, Constant> extras;
 	private String calledClass;
 	private Set<String> categories;
-	
-	public Intent(Constant[] args, Type[] types, ConstantPool cp ) {
-		this.extras=new HashMap<Constant,Constant>();
-		this.categories=new HashSet<String>();
-		
-		if("Ljava/lang/String;".equals(types[0].getSignature())){
-			this.action = args[0].getConstantString();
-		}
-		if(args.length>1)
-			if("Landroid/net/Uri;".equals(types[1].getSignature())){
-			this.uri=args[1].getConstantString();
-			}else if("Ljava/lang/Class;".equals(types[1].getSignature())){
-				this.calledClass = (String)((ConstantClass)args[1].getValue()).getConstantValue(cp);
-			}
+
+	public Intent() {
+		this.extras = new HashMap<Constant, Constant>();
+		this.categories = new HashSet<String>();
 	}
-	
-	public void setExtra(Constant name, Constant value){
+
+	public void setExtra(Constant name, Constant value) {
 		this.extras.put(name, value);
 	}
 
 	public void setAction(String action) {
-		this.action=action;		
+		this.action = action;
 	}
-	public boolean isExplicit(){
-		return calledClass !=null;
+
+	public boolean isExplicit() {
+		return calledClass != null;
 	}
 
 	@Override
@@ -63,7 +53,7 @@ public class Intent {
 	}
 
 	public void addCategory(String cat) {
-		this.categories.add(cat);		
+		this.categories.add(cat);
 	}
 
 	@Override
@@ -124,6 +114,17 @@ public class Intent {
 		return true;
 	}
 
+	public void callConstructor(Constant[] args, Type[] argumentTypes, ConstantPool constantPool) {
+		if ("Ljava/lang/String;".equals(argumentTypes[0].getSignature())) {
+			this.action = args[0].getConstantString();
+		}
+		if (args.length > 1)
+			if ("Landroid/net/Uri;".equals(argumentTypes[1].getSignature())) {
+				this.uri = args[1].getConstantString();
+			} else if ("Ljava/lang/Class;".equals(argumentTypes[1].getSignature())) {
+				this.calledClass = (String) ((ConstantClass) args[1].getValue()).getConstantValue(constantPool);
+			}
 
+	}
 
 }
