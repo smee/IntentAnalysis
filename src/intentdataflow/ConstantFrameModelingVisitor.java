@@ -112,7 +112,11 @@ public class ConstantFrameModelingVisitor extends AbstractFrameModelingVisitor<C
 
     @Override
     public void visitNEW(NEW obj) {
-    	modelInstruction(obj, getNumWordsConsumed(obj), getNumWordsProduced(obj), new Constant(obj.getLoadClassType(getCPG())));
+    	ObjectType type = obj.getLoadClassType(getCPG());
+    	Constant val = new Constant(type);
+    	if(type.getClassName().equals("android.content.Intent"))
+    		val=new Constant(new Intent());
+    	modelInstruction(obj, getNumWordsConsumed(obj), getNumWordsProduced(obj), val);
     }
     @Override
     public void visitGETFIELD(GETFIELD obj) {
@@ -123,12 +127,8 @@ public class ConstantFrameModelingVisitor extends AbstractFrameModelingVisitor<C
 		ObjectType loadClassType = obj.getLoadClassType(cpg);
 		String methodName = obj.getMethodName(cpg);
 		if (loadClassType.getClassName().equals("android.content.Intent") && methodName.equals("<init>")) {
-			Constant[] args = simulateCall(obj,false);
-			try {
-				((Intent)getFrame().getTopValue().getValue()).callConstructor(args,obj.getArgumentTypes(cpg),cpg.getConstantPool());
-			} catch (DataflowAnalysisException e) {
-				AnalysisContext.logError("Could not pop from call stack ", e);
-			}
+			Constant[] args = simulateCall(obj,true);
+			((Intent)getTopValue().getValue()).callConstructor(args,obj.getArgumentTypes(cpg),cpg.getConstantPool());
 		}else
 			super.visitINVOKESPECIAL(obj);
 
@@ -142,7 +142,7 @@ public class ConstantFrameModelingVisitor extends AbstractFrameModelingVisitor<C
 	 */
 	private Constant[] simulateCall(InvokeInstruction obj, boolean removeObject){
 		Constant[] res = getCallParameters(obj);
-		if(removeObject)
+		if(removeObject && getNumWordsConsumed(obj)==res.length+1)
 			popFrameTop();
 		return res;
 	}
@@ -209,8 +209,12 @@ public class ConstantFrameModelingVisitor extends AbstractFrameModelingVisitor<C
 				&& methodName.equals("getName")) {
 			// java.lang.Class.getName()
 			Constant clz = getTopValue();
+			
 			popFrameTop();
-			getFrame().pushValue(new Constant(((ConstantClass)clz.getValue()).getConstantValue(cpg.getConstantPool())));
+			if(clz.getValue()!=null)
+				getFrame().pushValue(new Constant(((ConstantClass)clz.getValue()).getConstantValue(cpg.getConstantPool())));
+			else
+				getFrame().pushValue(new Constant(clz));
 		} else {
 			super.visitINVOKEVIRTUAL(obj);
 		}
@@ -223,7 +227,7 @@ public class ConstantFrameModelingVisitor extends AbstractFrameModelingVisitor<C
     	String methodName = obj.getMethodName(cpg);
 		if (loadClassType.getClassName().equals("android.net.Uri") && methodName.equals("parse")) {
     		// android.net.Uri.parse(...)
-			Constant[] args = simulateCall(obj,true);
+			Constant[] args = simulateCall(obj,false);
 			getFrame().pushValue(new Constant(args[0].getValue()));
 		}else
 			super.visitINVOKESTATIC(obj);

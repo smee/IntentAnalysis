@@ -3,7 +3,6 @@
  */
 package detectors;
 
-import intentdataflow.Constant;
 import intentdataflow.ConstantFrame;
 import intentdataflow.Intent;
 import intentdataflow.IntentSimulatorDataflow;
@@ -79,7 +78,7 @@ IAnalysisCache analysisCache = Global.getAnalysisCache();
 			Location location) throws DataflowAnalysisException {
 		
 		ConstantFrame constantFrame = intentDataflow.getFactAtLocation(location);
-		for (int i = 0; i <constantFrame.getNumSlots(); i++) {
+		for (int i = 0; i <constantFrame.getStackDepth(); i++) {
 			Object value = constantFrame.getStackValue(i).getValue();
 			if(value instanceof Intent){
 				intents.add((Intent) value);
@@ -91,6 +90,7 @@ IAnalysisCache analysisCache = Global.getAnalysisCache();
 	@Override
 	public void finishPass() {
 		for (Intent intent : intents) {
+			System.out.println(intent);
 			BugInstance warning = new BugInstance(this, "CREATE_INTENT", Priorities.NORMAL_PRIORITY);
 			warning.addString(intent.toString());
 			warning.addClass("dummy");

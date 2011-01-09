@@ -115,6 +115,9 @@ public class Intent {
 	}
 
 	public void callConstructor(Constant[] args, Type[] argumentTypes, ConstantPool constantPool) {
+		if(argumentTypes.length==0)
+			return;
+		// TODO recognize setters for all values
 		if ("Ljava/lang/String;".equals(argumentTypes[0].getSignature())) {
 			this.action = args[0].getConstantString();
 		}
