@@ -3,6 +3,7 @@
  */
 package detectors;
 
+import intentdataflow.Constant;
 import intentdataflow.ConstantFrame;
 import intentdataflow.Intent;
 import intentdataflow.IntentSimulatorDataflow;
@@ -42,6 +43,14 @@ public class FindIntentsViaCFG extends CFGDetector {
 					Constants.INVOKEVIRTUAL_QUICK_W, 
 					Constants.INVOKEVIRTUALOBJECT_QUICK));
 
+	private static Set<String> intentInvokers = new HashSet<String>(
+		Arrays.asList (
+				// Activity
+				"startIntentSender","startActivity","startActivityForResult","startActivityFromChild","startActivityIfNeeded","queryIntentActivities",
+				// PackageManager
+				"queryBroadcastReceivers", "getActivityIcon",
+				"getActivityLogo", "queryIntentServices", "resolveActivity", "resolveService"));
+	
 	private Set<Intent> intents = new HashSet<Intent>();
 	private BugReporter bugreporter;
 	
@@ -54,19 +63,17 @@ public class FindIntentsViaCFG extends CFGDetector {
 	@Override
 	protected void visitMethodCFG(MethodDescriptor methodDescriptor, CFG cfg)
 			throws CheckedAnalysisException {
-IAnalysisCache analysisCache = Global.getAnalysisCache();
+		IAnalysisCache analysisCache = Global.getAnalysisCache();
 		
-		ConstantPoolGen cpg = analysisCache.getClassAnalysis(
-				ConstantPoolGen.class, methodDescriptor.getClassDescriptor());
-		IntentSimulatorDataflow intentDataflow = analysisCache.getMethodAnalysis(
-				IntentSimulatorDataflow.class, methodDescriptor);
+		ConstantPoolGen cpg = analysisCache.getClassAnalysis(ConstantPoolGen.class, methodDescriptor.getClassDescriptor());
+		IntentSimulatorDataflow intentDataflow = analysisCache.getMethodAnalysis(IntentSimulatorDataflow.class, methodDescriptor);
 		
 		for (Iterator<Location> i = cfg.locationIterator(); i.hasNext();) {
 			Location location = i.next();
 			short opcode = location.getHandle().getInstruction().getOpcode();
 			if (invokeOpcodes.contains(opcode)) {
 				XMethod method = XFactory.createXMethod((InvokeInstruction)location.getHandle().getInstruction(), cpg);
-				if(method.getName().contains("startActivity"))
+				if(intentInvokers.contains(method.getName()))
 					inspect(methodDescriptor, cpg, intentDataflow, location);
 			}
 		}
@@ -78,7 +85,7 @@ IAnalysisCache analysisCache = Global.getAnalysisCache();
 			Location location) throws DataflowAnalysisException {
 		
 		ConstantFrame constantFrame = intentDataflow.getFactAtLocation(location);
-		for (int i = 0; i <constantFrame.getStackDepth(); i++) {
+		for (int i = 0; i <constantFrame.getNumSlots(); i++) {
 			Object value = constantFrame.getStackValue(i).getValue();
 			if(value instanceof Intent){
 				intents.add((Intent) value);
@@ -90,11 +97,11 @@ IAnalysisCache analysisCache = Global.getAnalysisCache();
 	@Override
 	public void finishPass() {
 		for (Intent intent : intents) {
-			System.out.println(intent);
 			BugInstance warning = new BugInstance(this, "CREATE_INTENT", Priorities.NORMAL_PRIORITY);
 			warning.addString(intent.toString());
 			warning.addClass("dummy");
 			bugreporter.reportBug(warning);
+			System.out.println(intent);
 		}
 	}
 

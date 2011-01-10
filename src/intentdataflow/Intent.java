@@ -14,46 +14,50 @@ public class Intent {
 	String action;
 	String uri;
 	String mimetype;
-
+	
 	Map<Constant, Constant> extras;
 	private String calledClass;
 	private Set<String> categories;
-
+	
 	public Intent() {
-		this.extras = new HashMap<Constant, Constant>();
-		this.categories = new HashSet<String>();
+		this.extras=new HashMap<Constant,Constant>();
+		this.categories=new HashSet<String>();
 	}
-
-	public void setExtra(Constant name, Constant value) {
+	
+	public void setExtra(Constant name, Constant value){
 		this.extras.put(name, value);
 	}
 
 	public void setAction(String action) {
-		this.action = action;
+		this.action=action;		
 	}
-
-	public boolean isExplicit() {
-		return calledClass != null;
+	public boolean isExplicit(){
+		return calledClass !=null;
 	}
 
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder("Intent[");
 		if (isExplicit())
-			sb.append(calledClass);
+			sb.append("class=").append(calledClass);
 		else {
-			sb.append("action=").append(action).append(", uri=").append(uri)
-					.append(", mimetype=").append(mimetype);
+			if (action != null)
+				sb.append("action=").append(action);
+			if (uri != null)
+				sb.append(", uri=").append(uri);
+			if (mimetype != null)
+				sb.append(", mimetype=").append(mimetype);
 			if (!extras.isEmpty())
 				sb.append(", extras=" + extras);
-			sb.append(", categories=").append(categories);
-			sb.append("]");
+			if (!categories.isEmpty())
+				sb.append(", categories=").append(categories);
 		}
+		sb.append("]");
 		return sb.toString();
 	}
 
 	public void addCategory(String cat) {
-		this.categories.add(cat);
+		this.categories.add(cat);		
 	}
 
 	@Override
@@ -114,20 +118,19 @@ public class Intent {
 		return true;
 	}
 
-	public void callConstructor(Constant[] args, Type[] argumentTypes, ConstantPool constantPool) {
-		if(argumentTypes.length==0)
-			return;
-		// TODO recognize setters for all values
-		if ("Ljava/lang/String;".equals(argumentTypes[0].getSignature())) {
+	public void init(Constant[] args, Type[] argumentTypes,
+			ConstantPool constantPool) {
+		if("Ljava/lang/String;".equals(argumentTypes[0].getSignature())){
 			this.action = args[0].getConstantString();
 		}
-		if (args.length > 1)
-			if ("Landroid/net/Uri;".equals(argumentTypes[1].getSignature())) {
-				this.uri = args[1].getConstantString();
-			} else if ("Ljava/lang/Class;".equals(argumentTypes[1].getSignature())) {
-				this.calledClass = (String) ((ConstantClass) args[1].getValue()).getConstantValue(constantPool);
-			}
-
+		if(args.length>1)
+			if("Landroid/net/Uri;".equals(argumentTypes[1].getSignature())){
+			this.uri=args[1].getConstantString();
+			}else if("Ljava/lang/Class;".equals(argumentTypes[1].getSignature())){
+				this.calledClass = (String)((ConstantClass)args[1].getValue()).getConstantValue(constantPool);
+			}		
 	}
+
+
 
 }
