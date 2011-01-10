@@ -18,10 +18,12 @@ public class Intent {
 	Map<Constant, Constant> extras;
 	private String calledClass;
 	private Set<String> categories;
+	private boolean isExplicit;
 	
 	public Intent() {
 		this.extras=new HashMap<Constant,Constant>();
 		this.categories=new HashSet<String>();
+		this.isExplicit = false;
 	}
 	
 	public void setExtra(Constant name, Constant value){
@@ -32,7 +34,7 @@ public class Intent {
 		this.action=action;		
 	}
 	public boolean isExplicit(){
-		return calledClass !=null;
+		return isExplicit || calledClass !=null;
 	}
 
 	@Override
@@ -60,6 +62,7 @@ public class Intent {
 		this.categories.add(cat);		
 	}
 
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;
@@ -70,6 +73,7 @@ public class Intent {
 		result = prime * result
 				+ ((categories == null) ? 0 : categories.hashCode());
 		result = prime * result + ((extras == null) ? 0 : extras.hashCode());
+		result = prime * result + (isExplicit ? 1231 : 1237);
 		result = prime * result
 				+ ((mimetype == null) ? 0 : mimetype.hashCode());
 		result = prime * result + ((uri == null) ? 0 : uri.hashCode());
@@ -105,6 +109,8 @@ public class Intent {
 				return false;
 		} else if (!extras.equals(other.extras))
 			return false;
+		if (isExplicit != other.isExplicit)
+			return false;
 		if (mimetype == null) {
 			if (other.mimetype != null)
 				return false;
@@ -120,7 +126,7 @@ public class Intent {
 
 	public void init(Constant[] args, Type[] argumentTypes,
 			ConstantPool constantPool) {
-		if("Ljava/lang/String;".equals(argumentTypes[0].getSignature())){
+		if(isString(argumentTypes[0])){
 			this.action = args[0].getConstantString();
 		}
 		if(args.length>1)
@@ -131,6 +137,33 @@ public class Intent {
 			}		
 	}
 
+	private boolean isString(Type argumentType) {
+		return "Ljava/lang/String;".equals(argumentType.getSignature());
+	}
+
+	public void setData(String uri) {
+		this.uri=uri;
+	}
+	public void setType(String type){
+		this.mimetype=type;
+	}
+
+	/**
+	 * 
+	 * @param constantPool 
+	 * @param constant
+	 * @param constant2
+	 */
+	public void setClassname(Constant[] args, Type[] types, ConstantPool constantPool) {
+		if(isString(types[0]) && isString(types[1]))
+			this.calledClass=args[1].getConstantString();
+	}
+
+	public void setComponent(Constant constant, Type[] argumentTypes,
+			ConstantPool constantPool) {
+		this.isExplicit = true;
+		
+	}
 
 
 }

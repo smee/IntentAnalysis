@@ -129,7 +129,8 @@ public class ConstantFrameModelingVisitor extends AbstractFrameModelingVisitor<C
 		if (loadClassType.getClassName().equals("android.content.Intent") && methodName.equals("<init>")) {
 			Constant[] args = getCallParameters(obj);
 			Constant constant = popFrameTop();//the instance was put on the stack twice (new/dup), simulate it
-			((Intent)constant.getValue()).init(args,obj.getArgumentTypes(cpg),cpg.getConstantPool());
+			if(args.length>0)
+				((Intent)constant.getValue()).init(args,obj.getArgumentTypes(cpg),cpg.getConstantPool());
 		}else
 			super.visitINVOKESPECIAL(obj);
 
@@ -178,27 +179,58 @@ public class ConstantFrameModelingVisitor extends AbstractFrameModelingVisitor<C
 				Constant c = popFrameTop();
 				((Intent) c.getValue()).setExtra(args[0], args[1]);
 				getFrame().pushValue(c);
-			}else
-			if (methodName.equals("setAction")) {
+			} else if (methodName.equals("setAction")) {
 				// Intent.putExtra(...)
 				Constant[] args = getCallParameters(obj);
 				Constant c = popFrameTop();
 				((Intent) c.getValue()).setAction(args[0].getConstantString());
 				getFrame().pushValue(c);
-			}else
-				if (methodName.equals("addCategory")) {
-					// Intent.putExtra(...)
-					Constant[] args = getCallParameters(obj);
-					Constant c = popFrameTop();
-					((Intent) c.getValue()).addCategory(args[0].getConstantString());
-					getFrame().pushValue(c);
-				}
+			} else if (methodName.equals("addCategory")) {
+				// Intent.putExtra(...)
+				Constant[] args = getCallParameters(obj);
+				Constant c = popFrameTop();
+				((Intent) c.getValue()).addCategory(args[0].getConstantString());
+				getFrame().pushValue(c);
+			} else if (methodName.equals("setData")) {
+				// Intent.putExtra(...)
+				Constant[] args = getCallParameters(obj);
+				Constant c = popFrameTop();
+				((Intent) c.getValue()).setData(args[0].getConstantString());
+				getFrame().pushValue(c);
+			} else if (methodName.equals("setType")) {
+                // Intent.putExtra(...)
+                Constant[] args = getCallParameters(obj);
+                Constant c = popFrameTop();
+                ((Intent) c.getValue()).setType(args[0].getConstantString());
+                getFrame().pushValue(c);
+            } else if (methodName.equals("setDataAndType")) {
+                // Intent.putExtra(...)
+                Constant[] args = getCallParameters(obj);
+                Constant c = popFrameTop();
+                ((Intent) c.getValue()).setData(args[0].getConstantString());
+                ((Intent) c.getValue()).setType(args[1].getConstantString());
+                getFrame().pushValue(c);
+            }else if (methodName.equals("setClassName")) {
+                // Intent.putExtra(...)
+                Constant[] args = getCallParameters(obj);
+                Constant c = popFrameTop();
+                ((Intent) c.getValue()).setClassname(args,obj.getArgumentTypes(cpg),cpg.getConstantPool());
+                getFrame().pushValue(c);
+            }else if (methodName.equals("setComponent")) {
+                // Intent.putExtra(...)
+                Constant[] args = getCallParameters(obj);
+                Constant c = popFrameTop();
+                ((Intent) c.getValue()).setComponent(args[0],obj.getArgumentTypes(cpg),cpg.getConstantPool());
+                getFrame().pushValue(c);
+            }
 		} else if (loadClassType.getClassName().equals("java.lang.Class")
 				&& methodName.equals("getName")) {
 			// java.lang.Class.getName()
 			Constant clz = getTopValue();
 			popFrameTop();
-			getFrame().pushValue(new Constant(((ConstantClass)clz.getValue()).getConstantValue(cpg.getConstantPool())));
+			getFrame().pushValue(
+					new Constant(((ConstantClass) clz.getValue())
+							.getConstantValue(cpg.getConstantPool())));
 		} else {
 			super.visitINVOKEVIRTUAL(obj);
 		}
