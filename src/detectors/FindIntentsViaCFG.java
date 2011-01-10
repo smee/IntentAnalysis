@@ -3,7 +3,6 @@
  */
 package detectors;
 
-import intentdataflow.Constant;
 import intentdataflow.ConstantFrame;
 import intentdataflow.Intent;
 import intentdataflow.IntentSimulatorDataflow;
@@ -17,9 +16,7 @@ import org.apache.bcel.Constants;
 import org.apache.bcel.generic.ConstantPoolGen;
 import org.apache.bcel.generic.InvokeInstruction;
 
-import edu.umd.cs.findbugs.BugInstance;
 import edu.umd.cs.findbugs.BugReporter;
-import edu.umd.cs.findbugs.Priorities;
 import edu.umd.cs.findbugs.ba.CFG;
 import edu.umd.cs.findbugs.ba.DataflowAnalysisException;
 import edu.umd.cs.findbugs.ba.Location;
@@ -49,7 +46,9 @@ public class FindIntentsViaCFG extends CFGDetector {
 				"startIntentSender","startActivity","startActivityForResult","startActivityFromChild","startActivityIfNeeded","queryIntentActivities",
 				// PackageManager
 				"queryBroadcastReceivers", "getActivityIcon",
-				"getActivityLogo", "queryIntentServices", "resolveActivity", "resolveService"));
+				"getActivityLogo", "queryIntentServices", "resolveActivity", "resolveService",
+				// Context
+				"startService", "stopService","sendBroadcast", "sendOrderedBroadcast", "sendStickyBroadcast", "sendStickyOrderedBroadcast"));
 	
 	private Set<Intent> intents = new HashSet<Intent>();
 	private BugReporter bugreporter;
@@ -85,7 +84,7 @@ public class FindIntentsViaCFG extends CFGDetector {
 			Location location) throws DataflowAnalysisException {
 		
 		ConstantFrame constantFrame = intentDataflow.getFactAtLocation(location);
-		for (int i = 0; i <constantFrame.getNumSlots(); i++) {
+		for (int i = 0; i <constantFrame.getStackDepth(); i++) {
 			Object value = constantFrame.getStackValue(i).getValue();
 			if(value instanceof Intent){
 				intents.add((Intent) value);
@@ -96,13 +95,21 @@ public class FindIntentsViaCFG extends CFGDetector {
 	
 	@Override
 	public void finishPass() {
+		Set<Intent> explicits = new HashSet<Intent>();
+		Set<Intent> implicits = new HashSet<Intent>();
 		for (Intent intent : intents) {
-			BugInstance warning = new BugInstance(this, "CREATE_INTENT", Priorities.NORMAL_PRIORITY);
-			warning.addString(intent.toString());
-			warning.addClass("dummy");
-			bugreporter.reportBug(warning);
-			System.out.println(intent);
+			if(intent.isExplicit())
+				explicits.add(intent);
+			else
+				implicits.add(intent);
 		}
+		
+		System.out.println("Explicit intents:");
+		System.out.println("=================");
+		for (Intent intent : explicits) System.out.println(intent);
+		System.out.println("\nImplicit intents:");
+		System.out.println("=================");
+		for (Intent intent : implicits) System.out.println(intent);
 	}
 
 }
