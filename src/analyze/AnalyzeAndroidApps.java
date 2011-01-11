@@ -34,8 +34,9 @@ public class AnalyzeAndroidApps {
 	public static void main(String[] args) throws PluginException, IOException, InterruptedException {
 		AnalyzeAndroidApps a = new AnalyzeAndroidApps();
 		FindBugs2 fb = a.setUpEngine("D:/android/jars/PRODUCTIVITY/-102756457831925907/classes.dex");
-
 		fb.execute();
+
+		a.setUpEngine("D:/android/jars/COMMUNICATION/-100879633578829201/classes.dex.jar").execute();
 	}
 
 
@@ -56,10 +57,15 @@ public class AnalyzeAndroidApps {
         
         engine.setBugReporter(bugReporter);
         UserPreferences preferences = UserPreferences.createDefaultUserPreferences();
-        DetectorFactory checkExpectedWarnings = DetectorFactoryCollection.instance().getFactory("FindIntentsViaCFG");
-        preferences.enableDetector(checkExpectedWarnings, true);
+        preferences.setEffort(UserPreferences.EFFORT_MIN);
+        
+        DetectorFactory mydetector = DetectorFactoryCollection.instance().getFactory("FindIntentsViaCFG");
+        preferences.enableAllDetectors(false);
+        preferences.enableDetector(mydetector, true);
         preferences.getFilterSettings().clearAllCategories();
+        
         engine.setUserPreferences(preferences);
+
 
         project.addFile(fileUriToJar);
 

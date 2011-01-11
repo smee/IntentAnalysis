@@ -155,7 +155,8 @@ public class Intent {
 	 * @param constant2
 	 */
 	public void setClassname(Constant[] args, Type[] types, ConstantPool constantPool) {
-		if(isString(types[0]) && isString(types[1]))
+		isExplicit = true;
+		if(isString(types[1]))
 			this.calledClass=args[1].getConstantString();
 	}
 

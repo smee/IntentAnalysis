@@ -8,6 +8,7 @@ import intentdataflow.Intent;
 import intentdataflow.IntentSimulatorDataflow;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -24,6 +25,7 @@ import edu.umd.cs.findbugs.ba.XFactory;
 import edu.umd.cs.findbugs.ba.XMethod;
 import edu.umd.cs.findbugs.bcel.CFGDetector;
 import edu.umd.cs.findbugs.classfile.CheckedAnalysisException;
+import edu.umd.cs.findbugs.classfile.ClassDescriptor;
 import edu.umd.cs.findbugs.classfile.Global;
 import edu.umd.cs.findbugs.classfile.IAnalysisCache;
 import edu.umd.cs.findbugs.classfile.MethodDescriptor;
@@ -43,14 +45,18 @@ public class FindIntentsViaCFG extends CFGDetector {
 	private static Set<String> intentInvokers = new HashSet<String>(
 		Arrays.asList (
 				// Activity
-				"startIntentSender","startActivity","startActivityForResult","startActivityFromChild","startActivityIfNeeded","queryIntentActivities",
-				// PackageManager
-				"queryBroadcastReceivers", "getActivityIcon",
-				"getActivityLogo", "queryIntentServices", "resolveActivity", "resolveService",
+				"startIntentSender","startActivity","startActivityForResult","startActivityFromChild","startActivityIfNeeded",
 				// Context
 				"startService", "stopService","sendBroadcast", "sendOrderedBroadcast", "sendStickyBroadcast", "sendStickyOrderedBroadcast"));
 	
+	private static Set<String> intentQueries = new HashSet<String>(
+			Arrays.asList (
+					// PackageManager
+					"queryBroadcastReceivers", "getActivityIcon", "queryIntentActivities",
+					"getActivityLogo", "queryIntentServices", "resolveActivity", "resolveService"));
+	
 	private Set<Intent> intents = new HashSet<Intent>();
+	private Set<Intent> intentsQueried = new HashSet<Intent>();
 	private BugReporter bugreporter;
 	
 	public FindIntentsViaCFG(BugReporter reporter){
@@ -73,15 +79,28 @@ public class FindIntentsViaCFG extends CFGDetector {
 			if (invokeOpcodes.contains(opcode)) {
 				XMethod method = XFactory.createXMethod((InvokeInstruction)location.getHandle().getInstruction(), cpg);
 				if(intentInvokers.contains(method.getName()))
-					inspect(methodDescriptor, cpg, intentDataflow, location);
+					intents.addAll(inspect(methodDescriptor, cpg, intentDataflow, location));
+				else if(intentQueries.contains(method.getName()))
+					intentsQueried.addAll(inspect(methodDescriptor, cpg, intentDataflow, location));
 			}
 		}
 
 	}
+	@Override
+	public void visitClass(ClassDescriptor classDescriptor)
+			throws CheckedAnalysisException {
+		// exclude google's ad library, is obscenely obfuscated
+		// and generates a lot of false intent matches
+		String pname = classDescriptor.getPackageName();
+		if(!pname.startsWith("com.admob.android.ads") && !pname.startsWith("com.google.ads"))
+			super.visitClass(classDescriptor);
+	}
 
-	private void inspect(MethodDescriptor methodDescriptor,
+	private Collection<? extends Intent> inspect(MethodDescriptor methodDescriptor,
 			ConstantPoolGen cpg, IntentSimulatorDataflow intentDataflow,
 			Location location) throws DataflowAnalysisException {
+		
+		Set<Intent> intents = new HashSet<Intent>();
 		
 		ConstantFrame constantFrame = intentDataflow.getFactAtLocation(location);
 		for (int i = 0; i <constantFrame.getStackDepth(); i++) {
@@ -91,10 +110,19 @@ public class FindIntentsViaCFG extends CFGDetector {
 				break;
 			}
 		}
+		return intents;
 	}
 	
 	@Override
 	public void finishPass() {
+		System.out.println("Called:");
+		System.out.println("=======");
+		printIntents(intents);
+		System.out.println("\nQueried:");
+		System.out.println("========");
+		printIntents(intentsQueried);
+	}
+	private void printIntents(Set<Intent> intents) {
 		Set<Intent> explicits = new HashSet<Intent>();
 		Set<Intent> implicits = new HashSet<Intent>();
 		for (Intent intent : intents) {
