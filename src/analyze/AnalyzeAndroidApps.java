@@ -33,10 +33,12 @@ public class AnalyzeAndroidApps {
 	 */
 	public static void main(String[] args) throws PluginException, IOException, InterruptedException {
 		AnalyzeAndroidApps a = new AnalyzeAndroidApps();
-		FindBugs2 fb = a.setUpEngine("D:/android/jars/PRODUCTIVITY/-102756457831925907/classes.dex");
-		fb.execute();
-
-		a.setUpEngine("D:/android/jars/COMMUNICATION/-100879633578829201/classes.dex.jar").execute();
+		File dir = new File("d:/android/jars/PRODUCTIVITY");
+		for(File d:dir.listFiles()){
+			String filename = new File(d,"classes.dex").toString();
+			System.out.println(d.getName());
+			a.setUpEngine(filename).execute();
+		}
 	}
 
 

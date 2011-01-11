@@ -39,22 +39,46 @@ public class Intent {
 
 	@Override
 	public String toString() {
-		StringBuilder sb = new StringBuilder("Intent[");
+		StringBuilder sb = new StringBuilder("{");
+		sb.append(":explicit? ").append(isExplicit());
 		if (isExplicit())
-			sb.append("class=").append(calledClass);
+			sb.append(", :class ").append(toString(calledClass));
 		else {
 			if (action != null)
-				sb.append("action=").append(action);
+				sb.append(", :action ").append(toString(action));
 			if (uri != null)
-				sb.append(", uri=").append(uri);
+				sb.append(", :uri ").append(toString(uri));
 			if (mimetype != null)
-				sb.append(", mimetype=").append(mimetype);
+				sb.append(", :mimetype ").append(toString(mimetype));
 			if (!extras.isEmpty())
-				sb.append(", extras=" + extras);
+				sb.append(", :extras ").append(toString(extras));
 			if (!categories.isEmpty())
-				sb.append(", categories=").append(categories);
+				sb.append(", :categories ").append(toString(categories));
 		}
-		sb.append("]");
+		sb.append("}");
+		return sb.toString();
+	}
+
+	private Object toString(Map<Constant, Constant> map) {
+		StringBuilder sb = new StringBuilder("{");
+		for(Constant key:map.keySet()){
+			sb.append(toString(key.getConstantString().toString())).append(" ");
+			Constant value = map.get(key);
+			sb.append(toString(value.toString()));
+			sb.append(", ");
+		}
+		sb.append("}");
+		return sb.toString();
+	}
+
+	private Object toString(String s) {
+		return "\""+s+"\"";
+	}
+	private Object toString(Set<String> s) {
+		StringBuilder sb = new StringBuilder("#{");
+		for(String string:s)
+			sb.append(toString(string)).append(" ");
+		sb.append("}");
 		return sb.toString();
 	}
 

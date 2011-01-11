@@ -115,29 +115,14 @@ public class FindIntentsViaCFG extends CFGDetector {
 	
 	@Override
 	public void finishPass() {
-		System.out.println("Called:");
-		System.out.println("=======");
+		System.out.print("{:called [");
 		printIntents(intents);
-		System.out.println("\nQueried:");
-		System.out.println("========");
+		System.out.print("] :queried [");
 		printIntents(intentsQueried);
+		System.out.println("]}");
 	}
 	private void printIntents(Set<Intent> intents) {
-		Set<Intent> explicits = new HashSet<Intent>();
-		Set<Intent> implicits = new HashSet<Intent>();
-		for (Intent intent : intents) {
-			if(intent.isExplicit())
-				explicits.add(intent);
-			else
-				implicits.add(intent);
-		}
-		
-		System.out.println("Explicit intents:");
-		System.out.println("=================");
-		for (Intent intent : explicits) System.out.println(intent);
-		System.out.println("\nImplicit intents:");
-		System.out.println("=================");
-		for (Intent intent : implicits) System.out.println(intent);
+		for (Intent intent : intents) System.out.print(intent+" ");
 	}
 
 }
