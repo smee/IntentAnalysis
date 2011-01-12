@@ -17,7 +17,9 @@ import org.apache.bcel.Constants;
 import org.apache.bcel.generic.ConstantPoolGen;
 import org.apache.bcel.generic.InvokeInstruction;
 
+import edu.umd.cs.findbugs.BugInstance;
 import edu.umd.cs.findbugs.BugReporter;
+import edu.umd.cs.findbugs.Priorities;
 import edu.umd.cs.findbugs.ba.CFG;
 import edu.umd.cs.findbugs.ba.DataflowAnalysisException;
 import edu.umd.cs.findbugs.ba.Location;
@@ -115,14 +117,21 @@ public class FindIntentsViaCFG extends CFGDetector {
 	
 	@Override
 	public void finishPass() {
-		System.out.print("{:called [");
-		printIntents(intents);
-		System.out.print("] :queried [");
-		printIntents(intentsQueried);
-		System.out.println("]}");
+		StringBuilder sb = new StringBuilder("{:called [");
+		sb.append(printIntents(intents));
+		sb.append("] :queried [");
+		sb.append(printIntents(intentsQueried));
+		sb.append("]}");
+		
+		BugInstance warning = new BugInstance(this, "CREATE_INTENT", Priorities.NORMAL_PRIORITY);
+		warning.addString(sb.toString());
+		warning.addClass("dummy");
+		bugreporter.reportBug(warning);
 	}
-	private void printIntents(Set<Intent> intents) {
-		for (Intent intent : intents) System.out.print(intent+" ");
+	private String printIntents(Set<Intent> intents) {
+		StringBuilder sb = new StringBuilder();
+		for (Intent intent : intents) sb.append(intent).append(" ");
+		return sb.toString();
 	}
 
 }

@@ -41,7 +41,7 @@ public class Intent {
 	public String toString() {
 		StringBuilder sb = new StringBuilder("{");
 		sb.append(":explicit? ").append(isExplicit());
-		if (isExplicit())
+		if (calledClass !=null)
 			sb.append(", :class ").append(toString(calledClass));
 		else {
 			if (action != null)
@@ -72,7 +72,7 @@ public class Intent {
 	}
 
 	private Object toString(String s) {
-		return "\""+s+"\"";
+		return "\""+s.replaceAll("\"", "\\\\\"")+"\"";
 	}
 	private Object toString(Set<String> s) {
 		StringBuilder sb = new StringBuilder("#{");
