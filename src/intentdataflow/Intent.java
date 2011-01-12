@@ -62,7 +62,7 @@ public class Intent {
 	private Object toString(Map<Constant, Constant> map) {
 		StringBuilder sb = new StringBuilder("{");
 		for(Constant key:map.keySet()){
-			sb.append(toString(key.getConstantString().toString())).append(" ");
+			sb.append(toString(key.toString())).append(" ");
 			Constant value = map.get(key);
 			sb.append(toString(value.toString()));
 			sb.append(", ");
