@@ -91,8 +91,9 @@ public class AnalyzeAndroidApps {
         preferences.getFilterSettings().clearAllCategories();
         
         engine.setUserPreferences(preferences);
-
-
+        // disable TypeDataflow and ValueNumberDataflow, we don't user their results anyway
+        engine.setAnalysisFeatureSettings(preferences.getAnalysisFeatureSettings());
+        
         project.addFile(fileUriToJar);
 
         project.addAuxClasspathEntry("D:/android/android-sdk-windows/platforms/android-8/android.jar ");
