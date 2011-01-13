@@ -9,6 +9,7 @@ import java.net.MalformedURLException;
 import java.util.HashSet;
 import java.util.Set;
 
+import edu.umd.cs.findbugs.BugAnnotation;
 import edu.umd.cs.findbugs.BugCollectionBugReporter;
 import edu.umd.cs.findbugs.BugInstance;
 import edu.umd.cs.findbugs.BugReporter;
@@ -34,9 +35,12 @@ public class AnalyzeAndroidApps {
 
 		@Override
 		public void reportBug(BugInstance inst) {
-			StringAnnotation annotation = (StringAnnotation) inst.getAnnotations().get(0);
-			
-			intent=annotation.getValue();
+			BugAnnotation bugAnnotation = inst.getAnnotations().get(0);
+			if(bugAnnotation instanceof StringAnnotation){
+				// might be ClassAnnotation if the analyzed class was too big...
+				StringAnnotation annotation = (StringAnnotation) bugAnnotation;
+				intent=annotation.getValue();
+			}
 		}
 
 		public String getIntent(){ return intent;}
