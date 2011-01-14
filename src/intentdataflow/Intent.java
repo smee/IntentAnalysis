@@ -72,6 +72,8 @@ public class Intent {
 	}
 
 	private Object toString(String s) {
+		if(s == null)
+			s= "nil";
 		return "\""+s.replaceAll("\"", "\\\\\"")+"\"";
 	}
 	private Object toString(Set<String> s) {
