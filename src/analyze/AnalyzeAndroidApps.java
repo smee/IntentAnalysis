@@ -5,8 +5,12 @@ package analyze;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.net.MalformedURLException;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 
 import edu.umd.cs.findbugs.BugAnnotation;
@@ -21,6 +25,7 @@ import edu.umd.cs.findbugs.PluginException;
 import edu.umd.cs.findbugs.Priorities;
 import edu.umd.cs.findbugs.Project;
 import edu.umd.cs.findbugs.StringAnnotation;
+import edu.umd.cs.findbugs.classfile.analysis.MethodInfo;
 import edu.umd.cs.findbugs.config.UserPreferences;
 
 /**
@@ -101,6 +106,33 @@ public class AnalyzeAndroidApps {
         project.addFile(fileUriToJar);
 
         project.addAuxClasspathEntry("D:/android/android-sdk-windows/platforms/android-8/android.jar ");
+        fixFindbugMemoryLeak();
         return engine;
     }
+
+
+	private void fixFindbugMemoryLeak() {
+		try {
+			Class<MethodInfo> c = MethodInfo.class;
+			Field f = c.getDeclaredField("unconditionalThrowers");
+			f.setAccessible(true);
+			Method clearMethod = Map.class.getMethod("clear");
+			Object map = f.get(null);
+			if(map!=null)
+				clearMethod.invoke(map);
+		} catch (SecurityException e) {
+			e.printStackTrace();
+		} catch (NoSuchFieldException e) {
+			e.printStackTrace();
+		} catch (NoSuchMethodException e) {
+			e.printStackTrace();
+		} catch (IllegalArgumentException e) {
+			e.printStackTrace();
+		} catch (IllegalAccessException e) {
+			e.printStackTrace();
+		} catch (InvocationTargetException e) {
+			e.printStackTrace();
+		}
+		
+	}
 }
