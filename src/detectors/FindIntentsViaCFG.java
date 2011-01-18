@@ -46,10 +46,10 @@ public class FindIntentsViaCFG extends CFGDetector {
 
 	private static Set<String> intentInvokers = new HashSet<String>(
 		Arrays.asList (
-				// Activity
+				// Activity TODO these are special, categories should include the DEFAULT category, too
 				"startIntentSender","startActivity","startActivityForResult","startActivityFromChild","startActivityIfNeeded",
 				// Context
-				"startService", "stopService","sendBroadcast", "sendOrderedBroadcast", "sendStickyBroadcast", "sendStickyOrderedBroadcast"));
+				"startService", "stopService","bindService","sendBroadcast", "sendOrderedBroadcast", "sendStickyBroadcast", "sendStickyOrderedBroadcast"));
 	
 	private static Set<String> intentQueries = new HashSet<String>(
 			Arrays.asList (
