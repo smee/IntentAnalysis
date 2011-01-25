@@ -9,8 +9,10 @@ import intentdataflow.IntentSimulatorDataflow;
 
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.Set;
 
 import org.apache.bcel.Constants;
@@ -49,7 +51,7 @@ public class FindIntentsViaCFG extends CFGDetector {
 				// Activity TODO these are special, categories should include the DEFAULT category, too
 				"startIntentSender","startActivity","startActivityForResult","startActivityFromChild","startActivityIfNeeded",
 				// Context
-				"startService", "stopService","bindService","sendBroadcast", "sendOrderedBroadcast", "sendStickyBroadcast", "sendStickyOrderedBroadcast"));
+				"startService", "stopService","bindService","unbindService","sendBroadcast", "sendOrderedBroadcast", "sendStickyBroadcast", "sendStickyOrderedBroadcast"));
 	
 	private static Set<String> intentQueries = new HashSet<String>(
 			Arrays.asList (
@@ -57,8 +59,8 @@ public class FindIntentsViaCFG extends CFGDetector {
 					"queryBroadcastReceivers", "getActivityIcon", "queryIntentActivities",
 					"getActivityLogo", "queryIntentServices", "resolveActivity", "resolveService"));
 	
-	private Set<Intent> intents = new HashSet<Intent>();
-	private Set<Intent> intentsQueried = new HashSet<Intent>();
+	private Map<String,Set<Intent>> intents = new HashMap();
+	private Map<String,Set<Intent>> intentsQueried = new HashMap();
 	private BugReporter bugreporter;
 	
 	public FindIntentsViaCFG(BugReporter reporter){
@@ -80,13 +82,24 @@ public class FindIntentsViaCFG extends CFGDetector {
 			short opcode = location.getHandle().getInstruction().getOpcode();
 			if (invokeOpcodes.contains(opcode)) {
 				XMethod method = XFactory.createXMethod((InvokeInstruction)location.getHandle().getInstruction(), cpg);
-				if(intentInvokers.contains(method.getName()))
-					intents.addAll(inspect(methodDescriptor, cpg, intentDataflow, location));
-				else if(intentQueries.contains(method.getName()))
-					intentsQueried.addAll(inspect(methodDescriptor, cpg, intentDataflow, location));
+				
+				String methodName = method.getName();
+				if(intentInvokers.contains(methodName))
+					addInvokation(intents,methodName,inspect(methodDescriptor, cpg, intentDataflow, location));
+				else if(intentQueries.contains(methodName))
+					addInvokation(intentsQueried,methodName,inspect(methodDescriptor, cpg, intentDataflow, location));
 			}
 		}
 
+	}
+	private void addInvokation(Map<String, Set<Intent>> resultCollector,
+			String methodName, Collection<? extends Intent> intents) {
+		Set<Intent> allIntents= resultCollector.get(methodName);
+		if(allIntents == null){
+			allIntents=new HashSet();
+			resultCollector.put(methodName,allIntents);
+		}
+		allIntents.addAll(intents);
 	}
 	@Override
 	public void visitClass(ClassDescriptor classDescriptor)
@@ -117,9 +130,9 @@ public class FindIntentsViaCFG extends CFGDetector {
 	
 	@Override
 	public void finishPass() {
-		StringBuilder sb = new StringBuilder("{:called [");
+		StringBuilder sb = new StringBuilder("{:called {");
 		sb.append(printIntents(intents));
-		sb.append("] :queried [");
+		sb.append("} :queried [");
 		sb.append(printIntents(intentsQueried));
 		sb.append("]}");
 		
@@ -128,9 +141,13 @@ public class FindIntentsViaCFG extends CFGDetector {
 		warning.addClass("dummy");
 		bugreporter.reportBug(warning);
 	}
-	private String printIntents(Set<Intent> intents) {
+	private String printIntents(Map<String, Set<Intent>> intents) {
 		StringBuilder sb = new StringBuilder();
-		for (Intent intent : intents) sb.append(intent).append(" ");
+		for(String method:intents.keySet()){
+			sb.append(":").append(method).append(" [");
+			for (Intent intent : intents.get(method)) sb.append(intent).append(" ");
+			sb.append("], ");
+		}
 		return sb.toString();
 	}
 

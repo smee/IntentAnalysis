@@ -60,9 +60,7 @@ public class AnalyzeAndroidApps {
 		File dir = new File("d:/android/jars/PRODUCTIVITY");
 		for(File d:dir.listFiles()){
 			File f = new File(d,"classes.dex");
-			f=new File("D:\\android\\jars\\PRODUCTIVITY\\-1084558843411678631\\classes.dex");
 			System.out.println(findIntents(f));
-			return;
 		}
 	}
 
