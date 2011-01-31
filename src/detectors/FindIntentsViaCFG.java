@@ -132,9 +132,9 @@ public class FindIntentsViaCFG extends CFGDetector {
 	public void finishPass() {
 		StringBuilder sb = new StringBuilder("{:called {");
 		sb.append(printIntents(intents));
-		sb.append("} :queried [");
+		sb.append("} :queried {");
 		sb.append(printIntents(intentsQueried));
-		sb.append("]}");
+		sb.append("}}");
 		
 		BugInstance warning = new BugInstance(this, "CREATE_INTENT", Priorities.NORMAL_PRIORITY);
 		warning.addString(sb.toString());
