@@ -21,6 +21,13 @@
 			]]>
 		</Details>
 	</Detector>
+	<Detector class="detectors.FindIntentConstructors">
+		<Details>
+			<![CDATA[
+				<p>Find invocations of Intent constructors</p>
+			]]>
+		</Details>
+	</Detector>
 	
 	
 	

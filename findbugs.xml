@@ -8,11 +8,11 @@
 		website="">
 
 	
-	<!-- Detectors --><!--
-	<Detector class="detectors.FindIntentCreations"
+	<!-- Detectors -->
+	<Detector class="detectors.FindIntentConstructors"
 			reports="CREATE_INTENT"
 			hidden="false" />
-	-->
+	
 	<Detector class="detectors.FindIntentsViaCFG"
 			reports="CREATE_INTENT"
 			hidden="false" />

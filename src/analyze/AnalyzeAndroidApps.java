@@ -57,25 +57,34 @@ public class AnalyzeAndroidApps {
 	 * @throws IOException 
 	 */
 	public static void main(String[] args) throws PluginException, IOException, InterruptedException {
-		File dir = new File("d:/android/jars/PRODUCTIVITY");
+		File dir = new File("d:/android/apps/jars/PRODUCTIVITY");
 		for(File d:dir.listFiles()){
 			File f = new File(d,"classes.dex");
-			System.out.println(findIntents(f));
+//			System.out.println(findIntents(f));
+			System.out.println(countIntentConstructors(f));
 		}
 	}
-
+	public static int countIntentConstructors(File jarfile) throws PluginException, IOException, InterruptedException{
+		AnalyzeAndroidApps a = new AnalyzeAndroidApps();
+		FindBugs2 engine = a.setUpEngine(jarfile.toString(),"FindIntentConstructors",false);
+		
+		IntentStringObserver obs = new IntentStringObserver();
+		engine.getBugReporter().addObserver(obs);
+		engine.execute();
+		return engine.getBugReporter().getProjectStats().getBugsOfPriority(Priorities.NORMAL_PRIORITY);		
+	}
 
 	public static String findIntents(File jarfile) throws PluginException, IOException, InterruptedException{
 		AnalyzeAndroidApps a = new AnalyzeAndroidApps();
-		FindBugs2 engine = a.setUpEngine(jarfile.toString());
+		FindBugs2 engine = a.setUpEngine(jarfile.toString(),"FindIntentsViaCFG",true);
+        
 		IntentStringObserver obs = new IntentStringObserver();
 		engine.getBugReporter().addObserver(obs);
 		engine.execute();
 		return obs.getIntent();
 	}
-    private FindBugs2 setUpEngine(String fileUriToJar) throws MalformedURLException, PluginException {
-    	//Plugin.addCustomPlugin(new URL("file://findintents.jar"));
-    	
+
+    private FindBugs2 setUpEngine(String fileUriToJar,String detectorName,boolean useAndroidSdk) throws MalformedURLException, PluginException {
         FindBugs2 engine = new FindBugs2();
         Project project = new Project();
         project.setProjectName("analyze apps");
@@ -92,9 +101,9 @@ public class AnalyzeAndroidApps {
         UserPreferences preferences = UserPreferences.createDefaultUserPreferences();
         preferences.setEffort(UserPreferences.EFFORT_MIN);
         
-        DetectorFactory mydetector = DetectorFactoryCollection.instance().getFactory("FindIntentsViaCFG");
         preferences.enableAllDetectors(false);
-        preferences.enableDetector(mydetector, true);
+		DetectorFactory mydetector = DetectorFactoryCollection.instance().getFactory(detectorName);
+		preferences.enableDetector(mydetector, true);
         preferences.getFilterSettings().clearAllCategories();
         
         engine.setUserPreferences(preferences);
@@ -102,8 +111,8 @@ public class AnalyzeAndroidApps {
         engine.setAnalysisFeatureSettings(preferences.getAnalysisFeatureSettings());
         
         project.addFile(fileUriToJar);
-
-        project.addAuxClasspathEntry("D:/android/android-sdk-windows/platforms/android-8/android.jar ");
+        if(useAndroidSdk)
+        	project.addAuxClasspathEntry("t:/downloads/android/android-sdk-windows/platforms/android-8/android.jar");
         fixFindbugMemoryLeak();
         return engine;
     }

@@ -12,11 +12,11 @@ import edu.umd.cs.findbugs.Priorities;
  * @author sdienst
  *
  */
-public class FindIntentCreations extends BytecodeScanningDetector {
+public class FindIntentConstructors extends BytecodeScanningDetector {
 
 	private final BugReporter bugreporter;
 	
-	public FindIntentCreations(BugReporter br){
+	public FindIntentConstructors(BugReporter br){
 		this.bugreporter = br;
 	}
 	@Override
@@ -25,7 +25,6 @@ public class FindIntentCreations extends BytecodeScanningDetector {
 			return;
 		String calledClassName = getClassConstantOperand();
 		String calledMethodName = getNameConstantOperand();
-//		String calledMethodSig = getSigConstantOperand();
 		
 		if(calledMethodName.equals("<init>") && 
 				calledClassName.equals("android/content/Intent")){
@@ -35,4 +34,5 @@ public class FindIntentCreations extends BytecodeScanningDetector {
 			bugreporter.reportBug(warning);
 		}
 	}
+	
 }
