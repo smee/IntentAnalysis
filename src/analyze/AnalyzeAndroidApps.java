@@ -12,6 +12,7 @@ import java.net.MalformedURLException;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import edu.umd.cs.findbugs.BugAnnotation;
 import edu.umd.cs.findbugs.BugCollectionBugReporter;
@@ -50,6 +51,18 @@ public class AnalyzeAndroidApps {
 
 		public String getIntent(){ return intent;}
 	}
+	private static class BugCounterObserver implements BugReporterObserver{
+		AtomicInteger counter = new AtomicInteger(0);
+		@Override
+		public void reportBug(BugInstance arg0) {
+			counter.incrementAndGet();
+		}
+		public int getBugCount(){
+			return counter.get();
+		}
+		
+	}
+	
 	/**
 	 * @param args
 	 * @throws PluginException 
@@ -68,10 +81,10 @@ public class AnalyzeAndroidApps {
 		AnalyzeAndroidApps a = new AnalyzeAndroidApps();
 		FindBugs2 engine = a.setUpEngine(jarfile.toString(),"FindIntentConstructors",false);
 		
-		IntentStringObserver obs = new IntentStringObserver();
+		BugCounterObserver obs = new BugCounterObserver();
 		engine.getBugReporter().addObserver(obs);
 		engine.execute();
-		return engine.getBugReporter().getProjectStats().getBugsOfPriority(Priorities.NORMAL_PRIORITY);		
+		return obs.getBugCount();		
 	}
 
 	public static String findIntents(File jarfile) throws PluginException, IOException, InterruptedException{
