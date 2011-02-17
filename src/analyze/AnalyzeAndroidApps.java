@@ -131,10 +131,14 @@ public class AnalyzeAndroidApps {
     }
 
 
-	private void fixFindbugMemoryLeak() {
+    private void fixFindbugMemoryLeak() {
+    	fixFindbugMemoryLeak("unconditionalThrowers");
+    	fixFindbugMemoryLeak("unsupportedMethods");
+    }
+	private void fixFindbugMemoryLeak(String fieldName) {
 		try {
 			Class<MethodInfo> c = MethodInfo.class;
-			Field f = c.getDeclaredField("unconditionalThrowers");
+			Field f = c.getDeclaredField(fieldName);
 			f.setAccessible(true);
 			Method clearMethod = Map.class.getMethod("clear");
 			Object map = f.get(null);

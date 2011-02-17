@@ -7,11 +7,13 @@ import intentdataflow.ConstantFrame;
 import intentdataflow.Intent;
 import intentdataflow.IntentSimulatorDataflow;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -59,8 +61,8 @@ public class FindIntentsViaCFG extends CFGDetector {
 					"queryBroadcastReceivers", "getActivityIcon", "queryIntentActivities",
 					"getActivityLogo", "queryIntentServices", "resolveActivity", "resolveService"));
 	
-	private Map<String,Set<Intent>> intents = new HashMap();
-	private Map<String,Set<Intent>> intentsQueried = new HashMap();
+	private Map<String,List<Intent>> intents = new HashMap();
+	private Map<String,List<Intent>> intentsQueried = new HashMap();
 	private BugReporter bugreporter;
 	
 	public FindIntentsViaCFG(BugReporter reporter){
@@ -92,11 +94,11 @@ public class FindIntentsViaCFG extends CFGDetector {
 		}
 
 	}
-	private void addInvokation(Map<String, Set<Intent>> resultCollector,
+	private void addInvokation(Map<String, List<Intent>> resultCollector,
 			String methodName, Collection<? extends Intent> intents) {
-		Set<Intent> allIntents= resultCollector.get(methodName);
+		List<Intent> allIntents= resultCollector.get(methodName);
 		if(allIntents == null){
-			allIntents=new HashSet();
+			allIntents=new ArrayList();
 			resultCollector.put(methodName,allIntents);
 		}
 		allIntents.addAll(intents);
@@ -141,7 +143,7 @@ public class FindIntentsViaCFG extends CFGDetector {
 		warning.addClass("dummy");
 		bugreporter.reportBug(warning);
 	}
-	private String printIntents(Map<String, Set<Intent>> intents) {
+	private String printIntents(Map<String, List<Intent>> intents) {
 		StringBuilder sb = new StringBuilder();
 		for(String method:intents.keySet()){
 			sb.append(":").append(method).append(" [");
