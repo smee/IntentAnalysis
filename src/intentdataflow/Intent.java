@@ -15,19 +15,19 @@ public class Intent {
 	String uri;
 	String mimetype;
 	
-	Map<Constant, Constant> extras;
+	Map<Object, Object> extras;
 	private String calledClass;
 	private Set<String> categories;
 	private boolean isExplicit;
 	
 	public Intent() {
-		this.extras=new HashMap<Constant,Constant>();
+		this.extras=new HashMap<Object,Object>();
 		this.categories=new HashSet<String>();
 		this.isExplicit = false;
 	}
 	
-	public void setExtra(Constant name, Constant value){
-		this.extras.put(name, value);
+	public void setExtra(String object, String object2){
+		this.extras.put(object, object2);
 	}
 
 	public void setAction(String action) {
@@ -42,44 +42,48 @@ public class Intent {
 		StringBuilder sb = new StringBuilder("{");
 		sb.append(":explicit? ").append(isExplicit());
 		if (calledClass !=null)
-			sb.append(", :class ").append(toString(calledClass));
+			sb.append(", :class ").append(toClojure(calledClass));
 		else {
 			if (action != null)
-				sb.append(", :action ").append(toString(action));
+				sb.append(", :action ").append(toClojure(action));
 			if (uri != null)
-				sb.append(", :uri ").append(toString(uri));
+				sb.append(", :uri ").append(toClojure(uri));
 			if (mimetype != null)
-				sb.append(", :mimetype ").append(toString(mimetype));
+				sb.append(", :mimetype ").append(toClojure(mimetype));
 			if (!extras.isEmpty())
-				sb.append(", :extras ").append(toString(extras));
+				sb.append(", :extras ").append(toClojure(extras));
 			if (!categories.isEmpty())
-				sb.append(", :categories ").append(toString(categories));
+				sb.append(", :categories ").append(toClojure(categories));
 		}
 		sb.append("}");
 		return sb.toString();
 	}
 
-	private Object toString(Map<Constant, Constant> map) {
+	public static String toClojure(Map map) {
 		StringBuilder sb = new StringBuilder("{");
-		for(Constant key:map.keySet()){
-			sb.append(toString(key.toString())).append(" ");
-			Constant value = map.get(key);
-			sb.append(toString(value.toString()));
+		for(Object key:map.keySet()){
+			if(key==null)
+				key="nil";
+			sb.append(toClojure(key.toString())).append(" ");
+			Object value = map.get(key);
+			if(value==null)
+				value="nil";
+			sb.append(toClojure(value.toString()));
 			sb.append(", ");
 		}
 		sb.append("}");
 		return sb.toString();
 	}
 
-	private Object toString(String s) {
+	public static String toClojure(String s) {
 		if(s == null)
 			s= "nil";
 		return "\""+s.replaceAll("\"", "\\\\\"")+"\"";
 	}
-	private Object toString(Set<String> s) {
+	public static String toClojure(Set<String> s) {
 		StringBuilder sb = new StringBuilder("#{");
 		for(String string:s)
-			sb.append(toString(string)).append(" ");
+			sb.append(toClojure(string)).append(" ");
 		sb.append("}");
 		return sb.toString();
 	}
@@ -163,7 +167,7 @@ public class Intent {
 			}		
 	}
 
-	private boolean isString(Type argumentType) {
+	public static boolean isString(Type argumentType) {
 		return "Ljava/lang/String;".equals(argumentType.getSignature());
 	}
 

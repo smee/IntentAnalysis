@@ -5,6 +5,7 @@ package detectors;
 
 import intentdataflow.ConstantFrame;
 import intentdataflow.Intent;
+import intentdataflow.IntentFilter;
 import intentdataflow.IntentSimulatorDataflow;
 
 import java.util.ArrayList;
@@ -60,9 +61,11 @@ public class FindIntentsViaCFG extends CFGDetector {
 					// PackageManager
 					"queryBroadcastReceivers", "getActivityIcon", "queryIntentActivities",
 					"getActivityLogo", "queryIntentServices", "resolveActivity", "resolveService"));
+	private static Set<String> registerFilter = new HashSet<String>( Arrays.asList ("registerReceiver"));
 	
-	private Map<String,List<Intent>> intents = new HashMap();
-	private Map<String,List<Intent>> intentsQueried = new HashMap();
+	private Map<String,List> intents = new HashMap();
+	private Map<String,List> intentsQueried = new HashMap();
+	private Map<String,List> receiversRegistered = new HashMap();
 	private BugReporter bugreporter;
 	
 	public FindIntentsViaCFG(BugReporter reporter){
@@ -90,18 +93,20 @@ public class FindIntentsViaCFG extends CFGDetector {
 					addInvokation(intents,methodName,inspect(methodDescriptor, cpg, intentDataflow, location));
 				else if(intentQueries.contains(methodName))
 					addInvokation(intentsQueried,methodName,inspect(methodDescriptor, cpg, intentDataflow, location));
+				else if(registerFilter.contains(methodName))
+					addInvokation(receiversRegistered,methodName,inspect(methodDescriptor, cpg, intentDataflow, location));
 			}
 		}
 
 	}
-	private void addInvokation(Map<String, List<Intent>> resultCollector,
-			String methodName, Collection<? extends Intent> intents) {
-		List<Intent> allIntents= resultCollector.get(methodName);
+	private void addInvokation(Map<String, List> resultCollector, String methodName, Collection<?> collectedObjects) {
+		
+		List allIntents= resultCollector.get(methodName);
 		if(allIntents == null){
 			allIntents=new ArrayList();
 			resultCollector.put(methodName,allIntents);
 		}
-		allIntents.addAll(intents);
+		allIntents.addAll(collectedObjects);
 	}
 	@Override
 	public void visitClass(ClassDescriptor classDescriptor)
@@ -113,29 +118,31 @@ public class FindIntentsViaCFG extends CFGDetector {
 			super.visitClass(classDescriptor);
 	}
 
-	private Collection<? extends Intent> inspect(MethodDescriptor methodDescriptor,
+	private Collection inspect(MethodDescriptor methodDescriptor,
 			ConstantPoolGen cpg, IntentSimulatorDataflow intentDataflow,
 			Location location) throws DataflowAnalysisException {
 		
-		Set<Intent> intents = new HashSet<Intent>();
+		Set<Object> intentsAndFilters = new HashSet<Object>();
 		
 		ConstantFrame constantFrame = intentDataflow.getFactAtLocation(location);
 		for (int i = 0; i <constantFrame.getStackDepth(); i++) {
 			Object value = constantFrame.getStackValue(i).getValue();
-			if(value instanceof Intent){
-				intents.add((Intent) value);
+			if(value instanceof Intent || value instanceof IntentFilter){
+				intentsAndFilters.add(value);
 				break;
 			}
 		}
-		return intents;
+		return intentsAndFilters;
 	}
 	
 	@Override
 	public void finishPass() {
 		StringBuilder sb = new StringBuilder("{:called {");
-		sb.append(printIntents(intents));
+		sb.append(printExtractedObject(intents));
 		sb.append("} :queried {");
-		sb.append(printIntents(intentsQueried));
+		sb.append(printExtractedObject(intentsQueried));
+		sb.append("} :registered {");
+		sb.append(printExtractedObject(receiversRegistered));
 		sb.append("}}");
 		
 		BugInstance warning = new BugInstance(this, "CREATE_INTENT", Priorities.NORMAL_PRIORITY);
@@ -143,11 +150,11 @@ public class FindIntentsViaCFG extends CFGDetector {
 		warning.addClass("dummy");
 		bugreporter.reportBug(warning);
 	}
-	private String printIntents(Map<String, List<Intent>> intents) {
+	private String printExtractedObject(Map<String, List> objects) {
 		StringBuilder sb = new StringBuilder();
-		for(String method:intents.keySet()){
+		for(String method:objects.keySet()){
 			sb.append(":").append(method).append(" [");
-			for (Intent intent : intents.get(method)) sb.append(intent).append(" ");
+			for (Object o : objects.get(method)) sb.append(o).append(" ");
 			sb.append("], ");
 		}
 		return sb.toString();

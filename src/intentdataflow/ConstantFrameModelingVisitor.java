@@ -115,6 +115,8 @@ public class ConstantFrameModelingVisitor extends AbstractFrameModelingVisitor<C
     	ObjectType loadClassType = obj.getLoadClassType(cpg);
     	if("android.content.Intent".equals(loadClassType.getClassName())){
     		getFrame().pushValue(new Constant(new Intent()));
+    	}else if("android.content.IntentFilter".equals(loadClassType.getClassName())){
+        		getFrame().pushValue(new Constant(new IntentFilter()));
     	}else
     		modelInstruction(obj, getNumWordsConsumed(obj), getNumWordsProduced(obj), new Constant(obj.getLoadClassType(getCPG())));
     }
@@ -126,11 +128,20 @@ public class ConstantFrameModelingVisitor extends AbstractFrameModelingVisitor<C
 	public void visitINVOKESPECIAL(INVOKESPECIAL obj) {
 		ObjectType loadClassType = obj.getLoadClassType(cpg);
 		String methodName = obj.getMethodName(cpg);
-		if (loadClassType.getClassName().equals("android.content.Intent") && methodName.equals("<init>")) {
-			Constant[] args = getCallParameters(obj);
-			Constant constant = popFrameTop();//the instance was put on the stack twice (new/dup), simulate it
-			if(args.length>0)
-				((Intent)constant.getValue()).init(args,obj.getArgumentTypes(cpg),cpg.getConstantPool());
+		if (methodName.equals("<init>")) {
+			if (loadClassType.getClassName().equals("android.content.Intent")) {
+				Constant[] args = getCallParameters(obj);
+				Constant constant = popFrameTop();//the instance was put on the stack twice (new/dup), simulate it
+				if (args.length > 0)
+					((Intent) constant.getValue()).init(args,
+							obj.getArgumentTypes(cpg), cpg.getConstantPool());
+			} else if (loadClassType.getClassName().equals("android.content.IntentFilter")) {
+				Constant[] args = getCallParameters(obj);
+				Constant constant = popFrameTop();//the instance was put on the stack twice (new/dup), simulate it
+				if (args.length > 0)
+					((IntentFilter) constant.getValue()).init(args,
+							obj.getArgumentTypes(cpg), cpg.getConstantPool());
+			}
 		}else
 			super.visitINVOKESPECIAL(obj);
 
@@ -177,7 +188,7 @@ public class ConstantFrameModelingVisitor extends AbstractFrameModelingVisitor<C
 				// Intent.putExtra(...)
 				Constant[] args = getCallParameters(obj);
 				Constant c = popFrameTop();
-				((Intent) c.getValue()).setExtra(args[0], args[1]);
+				((Intent) c.getValue()).setExtra(args[0].getConstantString(), args[1].getConstantString());
 				getFrame().pushValue(c);
 			} else if (methodName.equals("setAction")) {
 				// Intent.putExtra(...)
@@ -223,6 +234,41 @@ public class ConstantFrameModelingVisitor extends AbstractFrameModelingVisitor<C
                 ((Intent) c.getValue()).setComponent(args[0],obj.getArgumentTypes(cpg),cpg.getConstantPool());
                 getFrame().pushValue(c);
             }
+		}else if (loadClassType.getClassName().equals("android.content.IntentFilter")) {
+			if (methodName.equals("addAction")) {
+				Constant[] args = getCallParameters(obj);
+				Constant c = popFrameTop();
+				((IntentFilter) c.getValue()).addAction(args[0].getConstantString());
+				getFrame().pushValue(c);
+			} else if (methodName.equals("addCategory")) {
+				Constant[] args = getCallParameters(obj);
+				Constant c = popFrameTop();
+				((IntentFilter) c.getValue()).addCategory(args[0].getConstantString());
+				getFrame().pushValue(c);
+			} else if (methodName.equals("addDataType")) {
+				Constant[] args = getCallParameters(obj);
+				Constant c = popFrameTop();
+				((IntentFilter) c.getValue()).addDataType(args[0].getConstantString());
+				getFrame().pushValue(c);
+			} else if (methodName.equals("addDataScheme")) {
+				// Intent.putExtra(...)
+				Constant[] args = getCallParameters(obj);
+				Constant c = popFrameTop();
+				((IntentFilter) c.getValue()).addDataScheme(args[0].getConstantString());
+				getFrame().pushValue(c);
+			} else if (methodName.equals("addDataAuthority")) {
+				// Intent.putExtra(...)
+				Constant[] args = getCallParameters(obj);
+				Constant c = popFrameTop();
+				((IntentFilter) c.getValue()).addDataAuthority(args[0].getConstantString(),args[1].getConstantString());
+				getFrame().pushValue(c);
+			} else if (methodName.equals("addDataPath")) {
+				// Intent.putExtra(...)
+				Constant[] args = getCallParameters(obj);
+				Constant c = popFrameTop();
+				((IntentFilter) c.getValue()).addDataPath(args[0].getConstantString(), args[1].getConstantInt());
+				getFrame().pushValue(c);
+			} 
 		} else if (loadClassType.getClassName().equals("java.lang.Class")
 				&& methodName.equals("getName")) {
 			// java.lang.Class.getName()
@@ -245,7 +291,14 @@ public class ConstantFrameModelingVisitor extends AbstractFrameModelingVisitor<C
     		// android.net.Uri.parse(...)
 			Constant[] args = getCallParameters(obj);
 			getFrame().pushValue(new Constant(args[0].getValue()));
-		}else
+		} else if (loadClassType.getClassName().equals("android.content.IntentFilter") && methodName.equals("create")) {
+    		// android.content.IntentFilter.create(action,datatype)
+			Constant[] args = getCallParameters(obj);
+			IntentFilter intentfilter = new IntentFilter();
+			intentfilter.addAction(args[0].getConstantString());
+			intentfilter.addDataType(args[1].getConstantString());
+			getFrame().pushValue(new Constant(intentfilter));
+		} else
 			super.visitINVOKESTATIC(obj);
 	}
 }
