@@ -70,12 +70,24 @@ public class AnalyzeAndroidApps {
 	 * @throws IOException 
 	 */
 	public static void main(String[] args) throws PluginException, IOException, InterruptedException {
-		File dir = new File("d:/android/apps/jars/PRODUCTIVITY");
-		for(File d:dir.listFiles()){
-			File f = new File(d,"classes.dex");
-//			System.out.println(findIntents(f));
-			System.out.println(countIntentConstructors(f));
+		if (args.length < 2) {
+			System.err.println("SYNOPSIS\n"
+							+ "java -jar patchedfindbugs.jar [-count|-intents] android-app.jar \n\n"
+							+ "-count\t\tcount all intent constructor calls\n"
+							+ "-intents\tExtract static parameters for intent constructor calls");
+		} else {
+			File input = new File(args[1]);
+			if (!input.exists()){
+				System.err.println("Input file \""+input+"\" does not exist!");
+			} else if ("-count".equals(args[0])) {
+				System.out.println(countIntentConstructors(input));
+			} else if ("-intents".equals(args[0])) {
+				System.out.println(findIntents(input));
+			}else{
+				System.err.println("Unknown command: \""+args[0]+"\"");
+			}
 		}
+
 	}
 	public static int countIntentConstructors(File jarfile) throws PluginException, IOException, InterruptedException{
 		AnalyzeAndroidApps a = new AnalyzeAndroidApps();
